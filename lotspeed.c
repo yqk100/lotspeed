@@ -310,8 +310,8 @@ static int __init lotspeed_module_init(void)
     BUILD_BUG_ON(sizeof(struct lotspeed) > ICSK_CA_PRIV_SIZE);
 
     pr_info("╔════════════════════════════════════════════════════════╗\n");
-    pr_info("║          LotSpeed v2.0 - 锐速复活版                      ║\n");
-    pr_info("║          Created by uk0 @ 2025-11-17 12:24:30           ║\n");
+    pr_info("║          LotSpeed v2.0 - 锐速复活版                    ║\n");
+    pr_info("║          Created by uk0 @ 2025-11-17 12:24:30          ║\n");
     pr_info("║          Kernel: %u.%u                                   ║\n",
             LINUX_VERSION_CODE >> 16, (LINUX_VERSION_CODE >> 8) & 0xff);
     pr_info("╚════════════════════════════════════════════════════════╝\n");
