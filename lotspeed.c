@@ -505,8 +505,6 @@ static int __init lotspeed_module_init(void)
 {
     unsigned long gbps_int, gbps_frac;
     unsigned int gain_int, gain_frac;
-    char line_buffer[64];  // 添加这行声明
-    int len;
 
 
     BUILD_BUG_ON(sizeof(struct lotspeed) > ICSK_CA_PRIV_SIZE);
@@ -514,24 +512,10 @@ static int __init lotspeed_module_init(void)
     pr_info("╔════════════════════════════════════════════════════════╗\n");
     pr_info("║          LotSpeed v2.0 - 锐速复活版                    ║\n");
     pr_info("║          Created by uk0 @ 2025-11-18 06:45:23          ║\n");
-
-    // 格式化内核版本行
-    len = snprintf(line_buffer, sizeof(line_buffer),
-                   "║          Kernel: %u.%u.%u",
-                   LINUX_VERSION_CODE >> 16,
-                   (LINUX_VERSION_CODE >> 8) & 0xff,
-                   LINUX_VERSION_CODE & 0xff);
-
-    // 填充空格到固定长度
-    while (len < 58) {
-        line_buffer[len++] = ' ';
-    }
-
-    // 添加右边框（使用字符串连接而不是单个字符）
-    line_buffer[len] = '\0';
-    strcat(line_buffer, "║");
-
-    pr_info("%s\n", line_buffer);
+    pr_info("║          Kernel: %u.%u.%-36u ║\n",
+            LINUX_VERSION_CODE >> 16,
+            (LINUX_VERSION_CODE >> 8) & 0xff,
+            LINUX_VERSION_CODE & 0xff);
     pr_info("╚════════════════════════════════════════════════════════╝\n");
 
     gbps_int = lotserver_rate / 125000000;
