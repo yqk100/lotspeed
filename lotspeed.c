@@ -501,21 +501,42 @@ static struct tcp_congestion_ops lotspeed_ops __read_mostly = {
         .cwnd_event     = lotspeed_cwnd_event,
 };
 
+// 添加这个辅助函数来格式化带边框的行
+static void print_boxed_line(const char *prefix, const char *content)
+{
+    int prefix_len = strlen(prefix);
+    int content_len = strlen(content);
+    int total_len = prefix_len + content_len;
+    int padding = 58 - total_len;  // 58 = 60 - 2个边框字符
+
+    if (padding < 0) padding = 0;
+
+    pr_info("║%s%s%*s║\n", prefix, content, padding, "");
+}
+
+
 static int __init lotspeed_module_init(void)
 {
     unsigned long gbps_int, gbps_frac;
     unsigned int gain_int, gain_frac;
-
+    char buffer[128];
 
     BUILD_BUG_ON(sizeof(struct lotspeed) > ICSK_CA_PRIV_SIZE);
 
     pr_info("╔════════════════════════════════════════════════════════╗\n");
     pr_info("║          LotSpeed v2.0 - 锐速复活版                    ║\n");
-    pr_info("║          Created by uk0 @ 2025-11-18 06:45:23          ║\n");
-    pr_info("║          Kernel: %u.%u.%-36u ║\n",
-            LINUX_VERSION_CODE >> 16,
-            (LINUX_VERSION_CODE >> 8) & 0xff,
-            LINUX_VERSION_CODE & 0xff);
+
+    // 动态生成时间和用户行
+    snprintf(buffer, sizeof(buffer), "uk0 @ 2025-11-18 06:53:13");
+    print_boxed_line("          Created by ", buffer);
+
+    // 动态生成内核版本行
+    snprintf(buffer, sizeof(buffer), "%u.%u.%u",
+             LINUX_VERSION_CODE >> 16,
+             (LINUX_VERSION_CODE >> 8) & 0xff,
+             LINUX_VERSION_CODE & 0xff);
+    print_boxed_line("          Kernel: ", buffer);
+
     pr_info("╚════════════════════════════════════════════════════════╝\n");
 
     gbps_int = lotserver_rate / 125000000;
