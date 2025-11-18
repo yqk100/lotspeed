@@ -510,11 +510,21 @@ static int __init lotspeed_module_init(void)
 
     pr_info("╔════════════════════════════════════════════════════════╗\n");
     pr_info("║          LotSpeed v2.0 - 锐速复活版                    ║\n");
-    pr_info("║          Created by uk0 @ 2025-11-17 12:57:26          ║\n");
-    pr_info("║          Kernel: %u.%u.%u                                ║\n",
-            LINUX_VERSION_CODE >> 16,
-            (LINUX_VERSION_CODE >> 8) & 0xff,
-            LINUX_VERSION_CODE & 0xff);
+    pr_info("║          Created by uk0 @ 2025-11-18 06:43:26          ║\n");
+
+    // 格式化内核版本行，确保总宽度为60字符
+    snprintf(line_buffer, sizeof(line_buffer),
+             "║          Kernel: %u.%u.%-34u║",
+             LINUX_VERSION_CODE >> 16,
+             (LINUX_VERSION_CODE >> 8) & 0xff,
+             LINUX_VERSION_CODE & 0xff);
+
+    // 确保长度正好是60（包括边框）
+    line_buffer[58] = ' ';  // 填充空格
+    line_buffer[59] = '║';  // 右边框
+    line_buffer[60] = '\0'; // 字符串结束
+
+    pr_info("%s\n", line_buffer);
     pr_info("╚════════════════════════════════════════════════════════╝\n");
 
     gbps_int = lotserver_rate / 125000000;
