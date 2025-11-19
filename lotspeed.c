@@ -1,5 +1,5 @@
 // lotspeed.c  ——  2025 年的"锐速"复活版 v2.0
-// Author: uk0 @ 2025-11-19 15:23:49
+// Author: uk0 @ 2025-11-19 17:06:58
 // 致敬经典 LotServer/ServerSpeeder，为新时代而生
 
 #include <linux/module.h>
@@ -10,15 +10,20 @@
 #include <linux/jiffies.h>
 #include <linux/ktime.h>
 
-// 版本兼容性检测 - 支持所有主流内核版本
+// 版本兼容性检测 - 修正版本判断逻辑
+// 根据实际测试：6.8.0 使用旧API，6.17+ 使用新API
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,17,0)
 #define KERNEL_6_17_PLUS 1
     #define NEW_CONG_CONTROL_API 1
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(6,8,0)
-#define KERNEL_6_8_PLUS 1
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0) && LINUX_VERSION_CODE < KERNEL_VERSION(6,17,0)
+// 6.9 - 6.16 使用新API (需要进一步测试确认)
     #define NEW_CONG_CONTROL_API 1
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,19,0)
-#define NEW_CONG_CONTROL_API 1
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,19,0) && LINUX_VERSION_CODE < KERNEL_VERSION(6,8,0)
+// 5.19 - 6.7.x 使用新API
+    #define NEW_CONG_CONTROL_API 1
+#else
+// 6.8.0 - 6.8.x 以及更早版本使用旧API
+#define OLD_CONG_CONTROL_API 1
 #endif
 
 // 可调参数（通过 sysfs 动态修改）
@@ -40,7 +45,7 @@ static int param_set_rate(const char *val, const struct kernel_param *kp)
     if (ret == 0 && old_val != lotserver_rate && lotserver_verbose) {
         unsigned long gbps_int = lotserver_rate / 125000000;
         unsigned long gbps_frac = (lotserver_rate % 125000000) * 100 / 125000000;
-        pr_info("lotspeed: [uk0@2025-11-19 15:23:49] rate changed: %lu -> %lu (%lu.%02lu Gbps)\n",
+        pr_info("lotspeed: [uk0@2025-11-19 17:06:58] rate changed: %lu -> %lu (%lu.%02lu Gbps)\n",
                 old_val, lotserver_rate, gbps_int, gbps_frac);
     }
     return ret;
@@ -55,7 +60,7 @@ static int param_set_gain(const char *val, const struct kernel_param *kp)
     if (ret == 0 && old_val != lotserver_gain && lotserver_verbose) {
         unsigned int gain_int = lotserver_gain / 10;
         unsigned int gain_frac = lotserver_gain % 10;
-        pr_info("lotspeed: [uk0@2025-11-19 15:23:49] gain changed: %u -> %u (%u.%ux)\n",
+        pr_info("lotspeed: [uk0@2025-11-19 17:06:58] gain changed: %u -> %u (%u.%ux)\n",
                 old_val, lotserver_gain, gain_int, gain_frac);
     }
     return ret;
@@ -68,7 +73,7 @@ static int param_set_min_cwnd(const char *val, const struct kernel_param *kp)
     int ret = param_set_uint(val, kp);
 
     if (ret == 0 && old_val != lotserver_min_cwnd && lotserver_verbose) {
-        pr_info("lotspeed: [uk0@2025-11-19 15:23:49] min_cwnd changed: %u -> %u\n",
+        pr_info("lotspeed: [uk0@2025-11-19 17:06:58] min_cwnd changed: %u -> %u\n",
                 old_val, lotserver_min_cwnd);
     }
     return ret;
@@ -81,7 +86,7 @@ static int param_set_max_cwnd(const char *val, const struct kernel_param *kp)
     int ret = param_set_uint(val, kp);
 
     if (ret == 0 && old_val != lotserver_max_cwnd && lotserver_verbose) {
-        pr_info("lotspeed: [uk0@2025-11-19 15:23:49] max_cwnd changed: %u -> %u\n",
+        pr_info("lotspeed: [uk0@2025-11-19 17:06:58] max_cwnd changed: %u -> %u\n",
                 old_val, lotserver_max_cwnd);
     }
     return ret;
@@ -94,7 +99,7 @@ static int param_set_adaptive(const char *val, const struct kernel_param *kp)
     int ret = param_set_bool(val, kp);
 
     if (ret == 0 && old_val != lotserver_adaptive && lotserver_verbose) {
-        pr_info("lotspeed: [uk0@2025-11-19 15:23:49] adaptive mode: %s -> %s\n",
+        pr_info("lotspeed: [uk0@2025-11-19 17:06:58] adaptive mode: %s -> %s\n",
                 old_val ? "ON" : "OFF", lotserver_adaptive ? "ON" : "OFF");
     }
     return ret;
@@ -108,10 +113,10 @@ static int param_set_turbo(const char *val, const struct kernel_param *kp)
 
     if (ret == 0 && old_val != lotserver_turbo && lotserver_verbose) {
         if (lotserver_turbo) {
-            pr_info("lotspeed: [uk0@2025-11-19 15:23:49] ⚡⚡⚡ TURBO MODE ACTIVATED ⚡⚡⚡\n");
+            pr_info("lotspeed: [uk0@2025-11-19 17:06:58] ⚡⚡⚡ TURBO MODE ACTIVATED ⚡⚡⚡\n");
             pr_info("lotspeed: WARNING: Ignoring ALL congestion signals!\n");
         } else {
-            pr_info("lotspeed: [uk0@2025-11-19 15:23:49] Turbo mode DEACTIVATED\n");
+            pr_info("lotspeed: [uk0@2025-11-19 17:06:58] Turbo mode DEACTIVATED\n");
         }
     }
     return ret;
@@ -229,7 +234,7 @@ static void lotspeed_init(struct sock *sk)
         unsigned int gain_int = ca->cwnd_gain / 10;
         unsigned int gain_frac = ca->cwnd_gain % 10;
 
-        pr_info("lotspeed: [uk0@2025-11-19 15:23:49] NEW connection #%d | rate=%lu.%02lu Gbps | gain=%u.%ux | mode=%s\n",
+        pr_info("lotspeed: [uk0@2025-11-19 17:06:58] NEW connection #%d | rate=%lu.%02lu Gbps | gain=%u.%ux | mode=%s\n",
                 atomic_read(&active_connections),
                 gbps_int, gbps_frac,
                 gain_int, gain_frac,
@@ -245,7 +250,7 @@ static void lotspeed_release(struct sock *sk)
 
     // 添加空指针检查
     if (!ca) {
-        pr_warn("lotspeed: [uk0@2025-11-19 15:23:49] release called with NULL ca\n");
+        pr_warn("lotspeed: [uk0@2025-11-19 17:06:58] release called with NULL ca\n");
         atomic_dec(&active_connections);
         return;
     }
@@ -268,7 +273,7 @@ static void lotspeed_release(struct sock *sk)
     }
 
     if (lotserver_verbose) {
-        pr_info("lotspeed: [uk0@2025-11-19 15:23:49] connection released, active=%d\n",
+        pr_info("lotspeed: [uk0@2025-11-19 17:06:58] connection released, active=%d\n",
                 atomic_read(&active_connections));
     }
 
@@ -420,7 +425,7 @@ static void lotspeed_cong_control_impl(struct sock *sk, const struct rate_sample
 
 // 主拥塞控制函数 - 兼容不同内核版本
 #ifdef NEW_CONG_CONTROL_API
-// 新版本内核 (5.19+, 包括 6.8.0 和 6.17.8)
+// 新版本内核 (5.19-6.7.x, 6.9+, 6.17+)
 static void lotspeed_cong_control(struct sock *sk, u32 ack, int flag,
                                   const struct rate_sample *rs)
 {
@@ -436,7 +441,7 @@ static void lotspeed_cong_control(struct sock *sk, u32 ack, int flag,
     lotspeed_cong_control_impl(sk, rs);
 }
 #else
-// 旧版本内核 (5.18 及以下)
+// 旧版本内核 (5.18 及以下, 6.8.0-6.8.x)
 static void lotspeed_cong_control(struct sock *sk, const struct rate_sample *rs)
 {
     // 直接调用实际的拥塞控制逻辑
@@ -591,7 +596,7 @@ static int __init lotspeed_module_init(void)
     pr_info("║          LotSpeed v2.0 - 锐速复活版                    ║\n");
 
     // 动态生成时间和用户行
-    snprintf(buffer, sizeof(buffer), "uk0 @ 2025-11-19 15:23:49");
+    snprintf(buffer, sizeof(buffer), "uk0 @ 2025-11-19 17:06:58");
     print_boxed_line("          Created by ", buffer);
 
     // 动态生成内核版本行
@@ -604,10 +609,10 @@ static int __init lotspeed_module_init(void)
     // 显示API版本信息
 #ifdef KERNEL_6_17_PLUS
     pr_info("║          API: NEW (6.17+ special)                      ║\n");
-#elif defined(KERNEL_6_8_PLUS)
-    pr_info("║          API: NEW (6.8+)                               ║\n");
 #elif defined(NEW_CONG_CONTROL_API)
-    pr_info("║          API: NEW (5.19+)                              ║\n");
+    pr_info("║          API: NEW (5.19-6.7.x, 6.9+)                   ║\n");
+#elif defined(OLD_CONG_CONTROL_API)
+    pr_info("║          API: LEGACY (6.8.0-6.8.x and older)           ║\n");
 #else
     pr_info("║          API: LEGACY (<5.19)                           ║\n");
 #endif
@@ -638,7 +643,7 @@ static void __exit lotspeed_module_exit(void)
     int active_conns;
     int retry_count = 0;
 
-    pr_info("lotspeed: [uk0@2025-11-19 15:23:49] Beginning module unload\n");
+    pr_info("lotspeed: [uk0@2025-11-19 17:06:58] Beginning module unload\n");
 
     // 先注销算法，防止新连接使用
     tcp_unregister_congestion_control(&lotspeed_ops);
@@ -674,7 +679,7 @@ static void __exit lotspeed_module_exit(void)
 
     pr_info("╔════════════════════════════════════════════════════════╗\n");
     pr_info("║          LotSpeed v2.0 Unloaded                        ║\n");
-    pr_info("║          Time: 2025-11-19 15:23:49                     ║\n");
+    pr_info("║          Time: 2025-11-19 17:06:58                     ║\n");
     pr_info("║          User: uk0                                     ║\n");
     pr_info("║          Active Connections: %-26d║\n", active_conns);
     pr_info("║          Data Sent: %llu.%llu GB%*s║\n",
