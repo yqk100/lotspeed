@@ -684,7 +684,7 @@ case "$ACTION" in
         ;;
     *)
         echo "╔════════════════════════════════════════════════════════╗"
-        echo "║        LotSpeed v$VERSION Management Tool                  ║"
+        echo "║        LotSpeed v$VERSION Management Tool                   ║"
         echo "║        公路超跑 完整整合版                             ║"
         echo "║        Created by uk0 @ $CURRENT_TIME            ║"
         echo "╚════════════════════════════════════════════════════════╝"
