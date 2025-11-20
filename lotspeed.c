@@ -28,7 +28,7 @@
 
 // 可调参数（通过 sysfs 动态修改）
 static unsigned long lotserver_rate = 125000000ULL;  // 默认 1Gbps
-static unsigned int lotserver_gain = 30;               // 3.0x 默认增益
+static unsigned int lotserver_gain = 15;               // 1.5x 默认增益
 static unsigned int lotserver_min_cwnd = 50;           // 最小拥塞窗口
 static unsigned int lotserver_max_cwnd = 10000;        // 最大拥塞窗口
 static bool lotserver_adaptive = true;                 // 自适应模式

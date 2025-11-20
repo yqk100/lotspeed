@@ -41,6 +41,13 @@ dmesg -w
 
 ```
 
+* 核心原理与设计哲学
+
+<div align=center>
+    <img src="https://github.com/uk0/lotspeed/blob/main/img_1.png" width="800" height="600" />
+</div>
+
+
 
 * helper
 
