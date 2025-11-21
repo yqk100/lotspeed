@@ -50,7 +50,7 @@ dmesg -w
 ```
 
 
-* helper
+* helper （lotserver_beta越小强的越凶，建议大雨620否则会导致CPU飙高）
 
 ```bash
 root@racknerd-6bf1e7b:~# lotspeed
